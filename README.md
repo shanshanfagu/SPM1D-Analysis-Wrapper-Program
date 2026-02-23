@@ -14,7 +14,7 @@ A desktop application for One-Dimensional Statistical Parametric Mapping (SPM1D)
 
 ## Quick Start
 
-### Option 1: Run EXE Directly (No Python required, ~645MB)
+### Option 1: Run EXE Directly (No Python required, ~646MB)
 
 1. Download `SPM1D Analyzer.exe`
 2. Double-click to run

@@ -1,89 +1,90 @@
-# SPM1D 桌面分析软件V1.1
+# SPM1D Desktop Analyzer
 
-一维统计参数映射(SPM)分析封装软件，无需编程基础，可直接使用！
+A desktop application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. No programming skills required!
 
-## 功能特点
+## Features
 
-- 📁 **数据导入**: 支持CSV/XLSX格式，文件夹结构自动识别指标和组别
-- 📈 **正态性检验**: 继承spm1d项目的D'Agostino-Pearson K²检验规则
-- 🔬 **多种分析**: 支持t检验、ANOVA、回归分析等
-- 📊 **可视化**: 均值曲线图、SPM统计曲线图、正态性检验图、事后检验图
-- 💾 **导出功能**: 一键导出完整Excel报告
-- 🚀 **无需依赖特定环境**: 提供EXE版本，可直接使用
+- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups
+- 📈 **Normality Test**: Implements D'Agostino-Pearson K² test from spm1d
+- 🔬 **Multiple Analyses**: Supports t-tests, ANOVA, regression analysis, etc.
+- 🌐 **Bilingual Interface**: Supports English and Simplified Chinese switching
+- 📊 **Visualization**: Mean curves, SPM statistical curves, normality test plots, post-hoc test plots
+- 💾 **Export**: One-click export to complete Excel reports
+- 🚀 **Standalone Executable**: EXE version available, no Python installation required
 
-## 快速开始
+## Quick Start
 
-### 方式一：直接运行EXE（无需安装Python，约645MB）
+### Option 1: Run EXE Directly (No Python required, ~645MB)
 
-1. 下载 `SPM1D分析软件.exe`
-2. 双击即可运行
+1. Download `SPM1D Analyzer.exe`
+2. Double-click to run
 
-### 方式二：从源码运行（轻量化，约150KB）
+### Option 2: Run from Source (Lightweight, ~150KB)
 
 ```bash
-# 克隆或下载本项目
-git clone <https://github.com/shanshanfagu/SPM1D-Analysis-Wrapper-Program>
+# Clone or download this project
+git clone https://github.com/shanshanfagu/SPM1D-Analysis-Wrapper-Program
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 运行程序
-python main_window.py
+# Run the program
+python SPM1D.py
 ```
 
-## 使用流程
+## Workflow
 
 ```
-数据导入 → 正态性检验 → 参数设置 → 运行分析 → 事后检验 → 查看图表 → 导出数据
+Data Import → Normality Test → Parameters → Run Analysis → Post-hoc Test → View Charts → Export Data
 ```
 
-### 数据导入
+### Data Import
 
-支持Excel (.xlsx) 和 CSV 格式：
-- 单文件：包含所有组别的数据
-- 多文件：按文件夹/工作表分组
+Supports Excel (.xlsx) and CSV formats:
+- Single file: Contains data for all groups
+- Multiple files: Organized by folders/worksheets
 
-### 正态性检验
+### Normality Test
 
-- 自动执行D'Agostino K²检验
-- 显示各组检验结果
-- 可选择检验方法（参数/非参数）
+- Automatically performs D'Agostino K² test
+- Displays test results for each group
+- Option to choose parametric/non-parametric methods
 
-### 参数设置
+### Parameter Settings
 
-| 分析类型 | 说明 |
-|---------|------|
-| 单样本t检验 | 与标准曲线比较 |
-| 两样本t检验 | 两组独立样本或配对样本比较 |
-| 单因素ANOVA | 多组样本比较 |
-| 简单回归 | 单变量趋势分析 |
+| Analysis Type | Description |
+|---------------|-------------|
+| One-sample t-test | Compare with standard curve |
+| Two-sample t-test | Compare two independent or paired samples |
+| One-way ANOVA | Compare multiple groups |
+| Simple Regression | Single variable trend analysis |
 
-### 数据导出
+### Data Export
 
-一键导出完整Excel报告（.xlsx）
+One-click export to complete Excel report (.xlsx)
 
-| Sheet | 内容 |
-|-------|------|
-| 总报告 | 分析参数摘要 |
-| 主效应检验结果 | SPM曲线数值 |
-| 正态分布结果 | K²曲线数值 |
-| 事后检验结果 | 两两比较曲线 |
+| Sheet | Content |
+|-------|---------|
+| Summary | Analysis parameter summary |
+| Main Effect Results | SPM curve values |
+| Normality Results | K² curve values |
+| Post-hoc Results | Pairwise comparison curves |
 
-## 数据格式要求
+## Data Format Requirements
 
-### Excel文件格式
+### Excel File Format
 
-| 样本\时间点 | T1 | T2 | T3 | T4 | ... |
-|------------|-----|-----|-----|-----|-----|
+| Sample\Time Point | T1 | T2 | T3 | T4 | ... |
+|-------------------|-----|-----|-----|-----|-----|
 | Subject1 | 1.2 | 1.3 | 1.4 | 1.5 | ... |
 | Subject2 | 1.1 | 1.2 | 1.3 | 1.4 | ... |
 | Subject3 | 1.3 | 1.4 | 1.5 | 1.6 | ... |
 
-- 每列代表一个时间点
-- 每行代表一个样本
-- 数值为数值类型
+- Each column represents a time point
+- Each row represents a sample
+- Values must be numeric
 
-## 依赖包
+## Dependencies
 
 - PyQt5>=5.15.0
 - spm1d>=0.4.5
@@ -93,12 +94,16 @@ python main_window.py
 - scipy>=1.7
 - openpyxl>=3.0
 
-## 许可证
+## Tech Stack
+
+Python + PyQt5 + SPM1D + JSON
+
+## License
 
 GPL-3.0 License
 
-## 参考项目
+## References
 
-- [spm1d项目](https://github.com/0todd0000/spm1d)
-- [spm1d文档](http://spm1d.org)
+- [spm1d Project](https://github.com/0todd0000/spm1d)
+- [spm1d Documentation](http://spm1d.org)
 

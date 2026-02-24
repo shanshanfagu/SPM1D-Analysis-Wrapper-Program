@@ -1,6 +1,6 @@
 # SPM1D Desktop Analyzer
 
-A desktop application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. No programming skills required!
+A desktop application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. No programming skills required! Supports both Chinese and English!
 
 ## Features
 

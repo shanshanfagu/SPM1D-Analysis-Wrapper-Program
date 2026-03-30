@@ -1,25 +1,25 @@
-# SPM1D Desktop Analyzer
+# SPM1D Analyzer v2.8
 
-A desktop application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. No programming skills required! Supports both Chinese and English!
+An application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. For the statistical analysis of continuous curve data. No programming skills required! Supports both Chinese and English!
 
 ## Features
 
-- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups
+- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups. Detects uneven data and recommends interpolation
+- 📊 **Data Preprocessing (Optional)**: Data interpolation and denoising
 - 📈 **Normality Test**: Implements D'Agostino-Pearson K² test from spm1d
-- 🔬 **Multiple Analyses**: Supports t-tests, ANOVA, regression analysis, etc.
+- 🔬 **Multiple Analyses**: Supports t-tests (one-sample, paired, independent), ANOVA (one-way, one-way repeated measures, two-way, two-way repeated measures, two-way mixed design), and simple regression
 - 🌐 **Bilingual Interface**: Supports English and Simplified Chinese switching
 - 📊 **Visualization**: Mean curves, SPM statistical curves, normality test plots, post-hoc test plots
 - 💾 **Export**: One-click export to complete Excel reports
-- 🚀 **Standalone Executable**: EXE version available, no Python installation required
+- 🚀 **Standalone**: Supports Windows (.exe) standalone packaging
 
 ## Quick Start
 
-### Option 1: Run EXE Directly (No Python required, ~646MB)
+### Option 1: Run Standalone (No Python required)
 
-1. Download `SPM1D Analyzer.exe`
-2. Double-click to run
+- **Windows**: Download `SPM1D Analyzer.exe`, Double-click to run
 
-### Option 2: Run from Source (Lightweight, ~150KB)
+### Option 2: Run from Source (Lightweight)
 
 ```bash
 # Clone or download this project
@@ -35,7 +35,7 @@ python SPM1D.py
 ## Workflow
 
 ```
-Data Import → Normality Test → Parameters → Run Analysis → Post-hoc Test → View Charts → Export Data
+Data Import → Data Preprocessing (Optional) → Normality Test → Parameters → Run Analysis → Post-hoc Test → View Charts → Export Data
 ```
 
 ### Data Import
@@ -43,6 +43,13 @@ Data Import → Normality Test → Parameters → Run Analysis → Post-hoc Test
 Supports Excel (.xlsx) and CSV formats:
 - Single file: Contains data for all groups
 - Multiple files: Organized by folders/worksheets
+- Automatically detects uneven data (different sample time point counts)
+
+### Data Preprocessing (Optional)
+
+- Data interpolation (interpolate samples to target number of time points)
+- Data denoising (low-pass, high-pass, band-pass filtering)
+- Files are renamed after preprocessing to indicate applied operations
 
 ### Normality Test
 
@@ -57,6 +64,10 @@ Supports Excel (.xlsx) and CSV formats:
 | One-sample t-test | Compare with standard curve |
 | Two-sample t-test | Compare two independent or paired samples |
 | One-way ANOVA | Compare multiple groups |
+| One-way Repeated Measures ANOVA | Compare multiple conditions with same subjects |
+| Two-way ANOVA | Two-factor independent groups analysis |
+| Two-way Repeated Measures ANOVA | Two-factor analysis with same subjects across all conditions |
+| Two-way Mixed Design ANOVA | One between-subjects factor and one within-subjects factor |
 | Simple Regression | Single variable trend analysis |
 
 ### Data Export
@@ -83,11 +94,13 @@ One-click export to complete Excel report (.xlsx)
 - Each column represents a time point
 - Each row represents a sample
 - Values must be numeric
+- Samples within a file can have different time point counts (uneven data). The software detects this and recommends interpolation
+- The software reads data starting from the first column and the second row. The first row can be used for custom column labels
 
 ## Dependencies
 
 - PyQt5>=5.15.0
-- spm1d>=0.4.5
+- spm1d>=0.4.3
 - numpy>=1.20
 - pandas>=1.3
 - matplotlib>=3.5
@@ -96,7 +109,7 @@ One-click export to complete Excel report (.xlsx)
 
 ## Tech Stack
 
-Python + PyQt5 + SPM1D + JSON
+Python + PyQt5 + SPM1D + NumPy + SciPy + Pandas + Matplotlib
 
 ## License
 
@@ -106,4 +119,5 @@ GPL-3.0 License
 
 - [spm1d Project](https://github.com/0todd0000/spm1d)
 - [spm1d Documentation](http://spm1d.org)
+
 

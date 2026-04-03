@@ -1,4 +1,4 @@
-# SPM1D Analyzer v2.8
+# SPM1D Analyzer v2.81
 
 An application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. For the statistical analysis of continuous curve data. No programming skills required! Supports both Chinese and English!
 

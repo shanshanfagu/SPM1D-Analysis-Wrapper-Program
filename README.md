@@ -1,10 +1,10 @@
-# SPM1D Analyzer v2.81
+# SPM1D Analyzer v2.82
 
 An application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. For the statistical analysis of continuous curve data. No programming skills required! Supports both Chinese and English!
 
 ## Features
 
-- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups. Detects uneven data and recommends interpolation
+- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups. Custom data selection is newly added in Version 2.82.
 - 📊 **Data Preprocessing (Optional)**: Data interpolation and denoising
 - 📈 **Normality Test**: Implements D'Agostino-Pearson K² test from spm1d
 - 🔬 **Multiple Analyses**: Supports t-tests (one-sample, paired, independent), ANOVA (one-way, one-way repeated measures, two-way, two-way repeated measures, two-way mixed design), and simple regression
@@ -17,7 +17,7 @@ An application for One-Dimensional Statistical Parametric Mapping (SPM1D) analys
 
 ### Option 1: Run Standalone (No Python required)
 
-- **Windows**: Download `SPM1D Analyzer.exe`, Double-click to run
+- **Windows**: Download `SPM1D Analyzer v2.82.exe`, Double-click to run
 
 ### Option 2: Run from Source (Lightweight)
 
@@ -29,7 +29,7 @@ git clone https://github.com/shanshanfagu/SPM1D-Analysis-Wrapper-Program
 pip install -r requirements.txt
 
 # Run the program
-python SPM1D.py
+SPM1D Analyzer v2.82.py
 ```
 
 ## Workflow

@@ -346,7 +346,22 @@ class TabPreprocess(QWidget):
                 groups[new_name] = result
                 renamed.append((name, new_name))
             except Exception as e:
-                show_warning(self, self.main_window.tr("common.warning"), f"{name}: {str(e)}")
+                error_msg = str(e)
+                if error_msg == "filter_nyquist_error":
+                    nyquist = fs / 2
+                    error_msg = self.main_window.tr("tab_preprocess.filter_nyquist_error").format(value=f"{nyquist:.2f}")
+                elif error_msg == "filter_cutoff_range_error":
+                    nyquist = fs / 2
+                    error_msg = self.main_window.tr("tab_preprocess.filter_cutoff_range_error").format(value=f"{nyquist:.2f}")
+                elif error_msg == "filter_bandpass_need_two_freqs":
+                    error_msg = self.main_window.tr("tab_preprocess.filter_bandpass_need_two_freqs")
+                elif error_msg == "filter_bandpass_low_high_error":
+                    error_msg = self.main_window.tr("tab_preprocess.filter_bandpass_low_high_error")
+                elif error_msg == "filter_low_freq_positive_error":
+                    error_msg = self.main_window.tr("tab_preprocess.filter_low_freq_positive_error")
+                elif error_msg.startswith("filter_unsupported_type"):
+                    error_msg = self.main_window.tr("tab_preprocess.filter_unsupported_type").format(value=filter_type)
+                show_warning(self, self.main_window.tr("common.warning"), f"{name}: {error_msg}")
 
         if renamed:
             self.main_window.analysis_data[indicator] = groups

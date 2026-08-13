@@ -176,7 +176,7 @@ class MainWindow(QMainWindow):
 
     def setup_statusbar(self):
         self.statusBar().showMessage(self.tr("main.ready"))
-        self.statusBar().addPermanentWidget(QLabel("SPM1D Analyzer v2.82"))
+        self.statusBar().addPermanentWidget(QLabel("SPM1D Analyzer v2.83"))
 
     def on_tab_changed(self, index):
         self.current_tab_index = index

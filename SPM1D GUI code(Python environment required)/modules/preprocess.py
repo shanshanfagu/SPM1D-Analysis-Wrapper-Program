@@ -90,13 +90,13 @@ def butterworth_filter(data, filter_type, cutoff, fs, order=4):
         if isinstance(cutoff, (list, tuple, np.ndarray)) and len(cutoff) == 2:
             low, high = float(cutoff[0]), float(cutoff[1])
         else:
-            raise ValueError("带通滤波需要两个截止频率")
+            raise ValueError("filter_bandpass_need_two_freqs")
         if low >= high:
-            raise ValueError("带通滤波：低频截止频率必须小于高频截止频率")
+            raise ValueError("filter_bandpass_low_high_error")
         if low <= 0:
-            raise ValueError("低频截止频率必须大于0")
+            raise ValueError("filter_low_freq_positive_error")
         if high >= nyquist:
-            raise ValueError(f"高频截止频率必须小于奈奎斯特频率 ({nyquist:.2f} Hz)")
+            raise ValueError("filter_nyquist_error")
         wn = [low / nyquist, high / nyquist]
         btype = 'bandpass'
     elif filter_type in ('lowpass', 'highpass'):
@@ -104,11 +104,11 @@ def butterworth_filter(data, filter_type, cutoff, fs, order=4):
             cutoff = float(cutoff[0]) if len(cutoff) > 0 else 0
         cutoff = float(cutoff)
         if cutoff <= 0 or cutoff >= nyquist:
-            raise ValueError(f"截止频率必须在 (0, {nyquist:.2f}) 范围内")
+            raise ValueError("filter_cutoff_range_error")
         wn = cutoff / nyquist
         btype = 'low' if filter_type == 'lowpass' else 'high'
     else:
-        raise ValueError(f"不支持的滤波类型: {filter_type}")
+        raise ValueError(f"filter_unsupported_type: {filter_type}")
 
     b, a = butter(order, wn, btype=btype)
 

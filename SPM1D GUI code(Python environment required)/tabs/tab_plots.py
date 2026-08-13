@@ -275,7 +275,10 @@ class TabPlots(QWidget):
                 else:
                     np.random.seed(42)
                     from modules.spm_analysis import SPMAnalyzer
-                    analyzer = SPMAnalyzer(test_data, test_type='anova1',
+                    posthoc_type = summary.get('test_type', '') if summary else ''
+                    if posthoc_type not in ('anova1', 'anova1rm'):
+                        posthoc_type = 'anova1'
+                    analyzer = SPMAnalyzer(test_data, test_type=posthoc_type,
                                           method=summary['method'])
                     spm_result, _ = analyzer.run_analysis()
                     if spm_result:
@@ -288,7 +291,8 @@ class TabPlots(QWidget):
                                 inference_result = pair_result['inference_result']
 
                 if spm_result and inference_result:
-                    plot_posthoc_result(spm_result, inference_result, ax=ax, title=selected_group)
+                    z_full = pair_result.get('z_full') if pair_result else None
+                    plot_posthoc_result(spm_result, inference_result, ax=ax, title=selected_group, z_full=z_full)
                 else:
                     ax.text(0.5, 0.5, self.main_window.tr("tab_plots.calc_failed"), ha='center', va='center', fontsize=14)
 
@@ -599,8 +603,9 @@ class TabPlots(QWidget):
                                         inference_result = pair_result['inference_result']
 
                         if spm_result and inference_result:
+                            z_full = pair_result.get('z_full') if pair_result else None
                             fig, ax = plt.subplots(figsize=(10, 6))
-                            plot_posthoc_result(spm_result, inference_result, ax=ax, title=selected_group)
+                            plot_posthoc_result(spm_result, inference_result, ax=ax, title=selected_group, z_full=z_full)
                             export_figure(fig, filename.replace(f'.{fmt}', ''), fmt)
 
                 elif chart_type == self.main_window.tr("tab_plots.normality_plot"):

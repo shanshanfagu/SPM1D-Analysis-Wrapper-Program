@@ -9,7 +9,7 @@ from PyQt5.QtGui import QFont, QColor
 import os
 import pandas as pd
 import numpy as np
-from modules.data_loader import load_data_by_indicator, scan_folder_files, load_selected_files
+from modules.data_loader import scan_folder_files, load_selected_files
 from modules.utils import show_info, show_warning, show_critical, show_question
 
 class TabImport(QWidget):
@@ -52,9 +52,13 @@ class TabImport(QWidget):
         self.btn_load = QPushButton(self.main_window.tr("tab_import.load_data"))
         self.btn_load.clicked.connect(self.load_data)
 
+        self.btn_clear = QPushButton(self.main_window.tr("tab_import.clear_data"))
+        self.btn_clear.clicked.connect(self.clear_all)
+
         group_layout.addWidget(self.root_path)
         group_layout.addWidget(self.btn_browse)
         group_layout.addWidget(self.btn_load)
+        group_layout.addWidget(self.btn_clear)
 
         self.group_source.setLayout(group_layout)
         layout.addWidget(self.group_source)
@@ -110,14 +114,10 @@ class TabImport(QWidget):
     def _create_button_section(self):
         layout = QHBoxLayout()
 
-        self.btn_clear = QPushButton(self.main_window.tr("tab_import.clear_data"))
-        self.btn_clear.clicked.connect(self.clear_all)
-        
         self.btn_next = QPushButton(self.main_window.tr("tab_import.next_normality"))
         self.btn_next.setEnabled(False)
         self.btn_next.clicked.connect(self.go_next)
 
-        layout.addWidget(self.btn_clear)
         layout.addStretch()
         layout.addWidget(self.btn_next)
 

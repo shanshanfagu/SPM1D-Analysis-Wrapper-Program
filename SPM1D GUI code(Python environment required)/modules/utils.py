@@ -9,50 +9,49 @@ def _get_tr(parent):
     return lambda x: x
 
 
-def show_info(parent, title, text):
-    """Information dialog with translated OK button"""
+def _show_msg(parent, title, text, icon, buttons):
     tr = _get_tr(parent)
     msg = QMessageBox(parent)
     msg.setWindowTitle(title)
     msg.setText(text)
-    msg.setIcon(QMessageBox.Icon.Information)
-    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-    msg.button(QMessageBox.StandardButton.Ok).setText(tr("common.ok"))
+    msg.setIcon(icon)
+    msg.setStandardButtons(buttons)
+    if buttons & QMessageBox.StandardButton.Ok:
+        msg.button(QMessageBox.StandardButton.Ok).setText(tr("common.ok"))
+    if buttons & QMessageBox.StandardButton.Yes:
+        msg.button(QMessageBox.StandardButton.Yes).setText(tr("common.yes"))
+    if buttons & QMessageBox.StandardButton.No:
+        msg.button(QMessageBox.StandardButton.No).setText(tr("common.no"))
     return msg.exec()
+
+
+def show_info(parent, title, text):
+    """Information dialog with translated OK button"""
+    return _show_msg(parent, title, text, QMessageBox.Icon.Information,
+                     QMessageBox.StandardButton.Ok)
 
 
 def show_warning(parent, title, text):
     """Warning dialog with translated OK button"""
-    tr = _get_tr(parent)
-    msg = QMessageBox(parent)
-    msg.setWindowTitle(title)
-    msg.setText(text)
-    msg.setIcon(QMessageBox.Icon.Warning)
-    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-    msg.button(QMessageBox.StandardButton.Ok).setText(tr("common.ok"))
-    return msg.exec()
+    return _show_msg(parent, title, text, QMessageBox.Icon.Warning,
+                     QMessageBox.StandardButton.Ok)
 
 
 def show_critical(parent, title, text):
     """Error dialog with translated OK button"""
-    tr = _get_tr(parent)
-    msg = QMessageBox(parent)
-    msg.setWindowTitle(title)
-    msg.setText(text)
-    msg.setIcon(QMessageBox.Icon.Critical)
-    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-    msg.button(QMessageBox.StandardButton.Ok).setText(tr("common.ok"))
-    return msg.exec()
+    return _show_msg(parent, title, text, QMessageBox.Icon.Critical,
+                     QMessageBox.StandardButton.Ok)
 
 
 def show_question(parent, title, text, default_btn=QMessageBox.StandardButton.No):
     """Question dialog with translated Yes/No buttons"""
-    tr = _get_tr(parent)
+    buttons = QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
     msg = QMessageBox(parent)
     msg.setWindowTitle(title)
     msg.setText(text)
     msg.setIcon(QMessageBox.Icon.Question)
-    msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    msg.setStandardButtons(buttons)
+    tr = _get_tr(parent)
     msg.button(QMessageBox.StandardButton.Yes).setText(tr("common.yes"))
     msg.button(QMessageBox.StandardButton.No).setText(tr("common.no"))
     msg.setDefaultButton(default_btn)

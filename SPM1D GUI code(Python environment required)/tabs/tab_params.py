@@ -94,6 +94,14 @@ class TabParams(QWidget):
         else:
             return []
 
+    def _make_ok_cancel_box(self, dialog):
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        button_box.button(QDialogButtonBox.Ok).setText(self.main_window.tr("common.ok"))
+        button_box.button(QDialogButtonBox.Cancel).setText(self.main_window.tr("common.cancel"))
+        return button_box
+
     def _create_alpha_section(self):
         self.group_alpha = QGroupBox(self.main_window.tr("tab_params.alpha_level"))
         group_layout = QHBoxLayout()
@@ -223,11 +231,7 @@ class TabParams(QWidget):
         
         y_combo.currentIndexChanged.connect(update_x_combo)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-        button_box.button(QDialogButtonBox.Ok).setText(self.main_window.tr("common.ok"))
-        button_box.button(QDialogButtonBox.Cancel).setText(self.main_window.tr("common.cancel"))
+        button_box = self._make_ok_cancel_box(dialog)
         layout.addWidget(button_box)
 
         dialog.setLayout(layout)
@@ -280,11 +284,7 @@ class TabParams(QWidget):
         
         y_combo.currentIndexChanged.connect(update_mu_combo)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-        button_box.button(QDialogButtonBox.Ok).setText(self.main_window.tr("common.ok"))
-        button_box.button(QDialogButtonBox.Cancel).setText(self.main_window.tr("common.cancel"))
+        button_box = self._make_ok_cancel_box(dialog)
         layout.addWidget(button_box)
 
         dialog.setLayout(layout)
@@ -360,11 +360,7 @@ class TabParams(QWidget):
 
         update_a_combo()
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-        button_box.button(QDialogButtonBox.Ok).setText(self.main_window.tr("common.ok"))
-        button_box.button(QDialogButtonBox.Cancel).setText(self.main_window.tr("common.cancel"))
+        button_box = self._make_ok_cancel_box(dialog)
         layout.addWidget(button_box)
 
         dialog.setLayout(layout)
@@ -469,11 +465,7 @@ class TabParams(QWidget):
         layout.addWidget(QLabel(self.main_window.tr("tab_params.subject_id")))
         layout.addWidget(subj_combo)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-        button_box.button(QDialogButtonBox.Ok).setText(self.main_window.tr("common.ok"))
-        button_box.button(QDialogButtonBox.Cancel).setText(self.main_window.tr("common.cancel"))
+        button_box = self._make_ok_cancel_box(dialog)
         layout.addWidget(button_box)
 
         dialog.setLayout(layout)
@@ -578,11 +570,7 @@ class TabParams(QWidget):
         layout.addWidget(QLabel(self.main_window.tr("tab_params.subject_id")))
         layout.addWidget(subj_combo)
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-        button_box.button(QDialogButtonBox.Ok).setText(self.main_window.tr("common.ok"))
-        button_box.button(QDialogButtonBox.Cancel).setText(self.main_window.tr("common.cancel"))
+        button_box = self._make_ok_cancel_box(dialog)
         layout.addWidget(button_box)
 
         dialog.setLayout(layout)
@@ -640,7 +628,8 @@ class TabParams(QWidget):
                 return
 
             params['y_data'] = groups[y_name]
-            params['mu_data'] = groups[mu_name]
+            mu_data = groups[mu_name]
+            params['mu_data'] = np.mean(mu_data, axis=0) if mu_data.ndim >= 2 else np.asarray(mu_data, dtype=float)
 
         elif test_type == 'regress':
             if len(groups) != 2:

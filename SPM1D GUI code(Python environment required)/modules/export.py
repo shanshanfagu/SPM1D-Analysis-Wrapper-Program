@@ -37,17 +37,20 @@ def create_k2_curve_df(group_name, spm_result, inference_result, tr=None):
     return pd.DataFrame(rows)
 
 
-def create_posthoc_curve_df(pair_name, spm_result, inference_result, tr=None):
+def create_posthoc_curve_df(pair_name, spm_result, inference_result, tr=None, z_full=None):
     tr = tr or (lambda x: x)
-    spm_values = spm_result.z
+    spm_values = z_full if z_full is not None else np.asarray(spm_result.z)
     zstar = inference_result.zstar if inference_result else None
     
     rows = []
     for i, spm_val in enumerate(spm_values):
-        significant = tr('export.yes') if zstar and abs(spm_val) > zstar else tr('export.no')
+        is_sig = False
+        if zstar is not None and not (isinstance(spm_val, float) and np.isnan(spm_val)):
+            is_sig = abs(spm_val) > zstar
+        significant = tr('export.yes') if is_sig else tr('export.no')
         rows.append({
             tr('export.time_point'): i,
-            f'{pair_name}': spm_val,
+            f'{pair_name}': spm_val if not (isinstance(spm_val, float) and np.isnan(spm_val)) else '',
             f'{pair_name}_{tr("export.threshold")}': zstar if zstar else '',
             f'{pair_name}_{tr("export.above_threshold")}': significant
         })
@@ -85,6 +88,12 @@ def export_all_to_xlsx(summary, normality_results, posthoc_summary,
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
     with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+        effect_names_list = [
+            tr('export.main_effect_a'),
+            tr('export.main_effect_b'),
+            tr('export.interaction_effect')
+        ]
+
         if summary:
             method_text = tr('export.param_method_param') if summary.get('method') == 'param' else tr('export.param_method_nonparam')
             
@@ -100,11 +109,6 @@ def export_all_to_xlsx(summary, normality_results, posthoc_summary,
                 ]
                 
                 for i, effect in enumerate(summary.get('effects', [])):
-                    effect_names_list = [
-                        tr('export.main_effect_a'),
-                        tr('export.main_effect_b'),
-                        tr('export.interaction_effect')
-                    ]
                     effect_name = effect_names_list[i] if i < len(effect_names_list) else f'Effect {i}'
                     h0_text = tr('export.yes') if effect.get('h0reject') else tr('export.no')
                     rows.append({tr('export.param'): '', tr('export.value'): ''})
@@ -117,11 +121,6 @@ def export_all_to_xlsx(summary, normality_results, posthoc_summary,
                 summary_df.to_excel(writer, sheet_name=tr('export.sheet_summary'), index=False, startrow=0, startcol=0)
                 
                 if cached_spm_result and cached_inference_result and isinstance(cached_inference_result, list):
-                    effect_names_list = [
-                        tr('export.main_effect_a'),
-                        tr('export.main_effect_b'),
-                        tr('export.interaction_effect')
-                    ]
                     for idx, (spm_f, inf_f) in enumerate(zip(cached_spm_result, cached_inference_result)):
                         spm_df = create_spm_curve_df(spm_f, inf_f, tr)
                         effect_name = effect_names_list[idx] if idx < len(effect_names_list) else f'Effect_{idx}'
@@ -141,10 +140,8 @@ def export_all_to_xlsx(summary, normality_results, posthoc_summary,
 
         if cached_spm_result and cached_inference_result:
             test_type = summary.get('test_type', '') if summary else ''
-            
-            if test_type in ['anova2', 'anova2rm', 'anova2onerm'] and isinstance(cached_inference_result, list):
-                pass
-            elif test_type == 'regress':
+
+            if test_type == 'regress':
                 beta_slope = summary.get('beta_slope')
                 beta_intercept = summary.get('beta_intercept')
                 r_curve = summary.get('r')
@@ -217,7 +214,7 @@ def export_all_to_xlsx(summary, normality_results, posthoc_summary,
                     spm_result = result.get('spm_result')
                     inference_result = result.get('inference_result')
                     if spm_result is not None:
-                        posthoc_df = create_posthoc_curve_df(pair_name, spm_result, inference_result, tr)
+                        posthoc_df = create_posthoc_curve_df(pair_name, spm_result, inference_result, tr, z_full=result.get('z_full'))
                         posthoc_dfs.append(posthoc_df)
 
             if posthoc_summary_rows:

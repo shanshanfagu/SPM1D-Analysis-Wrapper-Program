@@ -14,6 +14,47 @@ def setup_plot_style():
     matplotlib.rcParams['grid.alpha'] = 0.3
     matplotlib.rcParams['axes.unicode_minus'] = False
 
+def _draw_threshold(ax, x, z, zstar, two_tailed=True):
+    """Draw threshold line(s), significance shading and threshold labels."""
+    ax.axhline(y=zstar, color='red', linestyle='--', linewidth=1.5)
+    if two_tailed:
+        ax.axhline(y=-zstar, color='red', linestyle='--', linewidth=1.5)
+        ax.fill_between(x, zstar, z, where=(z > zstar), color='red', alpha=0.3)
+        ax.fill_between(x, -zstar, z, where=(z < -zstar), color='red', alpha=0.3)
+        ax.text(x[-1] * 0.95, zstar + 0.3, f'+z* = {zstar:.4f}',
+                ha='center', va='bottom', fontsize=9, color='red')
+        ax.text(x[-1] * 0.95, -zstar - 0.3, f'-z* = {-zstar:.4f}',
+                ha='center', va='top', fontsize=9, color='red')
+    else:
+        ax.fill_between(x, zstar, z, where=(z > zstar), color='red', alpha=0.3)
+        ax.text(x[-1] * 0.95, zstar + 0.3, f'+z* = {zstar:.4f}',
+                ha='center', va='bottom', fontsize=9, color='red')
+
+
+def _annotate_p_values(ax, z, inference_result):
+    """Annotate cluster p-values at the peak of each cluster (NaN-safe)."""
+    if not (hasattr(inference_result, 'p') and inference_result.p is not None):
+        return
+    p_values = inference_result.p
+    if not isinstance(p_values, (list, np.ndarray)):
+        return
+    if not (hasattr(inference_result, 'clusters') and inference_result.clusters is not None):
+        return
+    for p, cluster in zip(p_values, inference_result.clusters):
+        if not hasattr(cluster, 'endpoints'):
+            continue
+        p_str = "<0.001" if p < 0.001 else f"{p:.4f}"
+        start_idx = max(0, min(int(cluster.endpoints[0]), len(z) - 1))
+        end_idx = max(0, min(int(cluster.endpoints[1]), len(z) - 1))
+        region_z = z[start_idx:end_idx + 1]
+        valid = ~np.isnan(region_z)
+        if not valid.any():
+            continue
+        max_idx = np.nanargmax(region_z)
+        ax.text(start_idx + max_idx, region_z[max_idx] + 0.5, f'p = {p_str}',
+                ha='center', va='bottom', fontsize=9, color='black')
+
+
 def plot_mean_sd(data_dict, ax=None, save_path=None):
     setup_plot_style()
     
@@ -55,20 +96,7 @@ def plot_spm_result(spm_result, inference_result, ax=None, save_path=None, test_
     
     ax.plot(x, z, color=COLORS['primary'], linewidth=2)
 
-    if two_tailed:
-        ax.axhline(y=zstar, color='red', linestyle='--', linewidth=1.5)
-        ax.axhline(y=-zstar, color='red', linestyle='--', linewidth=1.5)
-        ax.fill_between(x, zstar, z, where=(z > zstar), color='red', alpha=0.3)
-        ax.fill_between(x, -zstar, z, where=(z < -zstar), color='red', alpha=0.3)
-        ax.text(x[-1] * 0.95, zstar + 0.3, f'+z* = {zstar:.4f}',
-                ha='center', va='bottom', fontsize=9, color='red')
-        ax.text(x[-1] * 0.95, -zstar - 0.3, f'-z* = {-zstar:.4f}',
-                ha='center', va='top', fontsize=9, color='red')
-    else:
-        ax.axhline(y=zstar, color='red', linestyle='--', linewidth=1.5)
-        ax.fill_between(x, zstar, z, where=(z > zstar), color='red', alpha=0.3)
-        ax.text(x[-1] * 0.95, zstar + 0.3, f'+z* = {zstar:.4f}',
-                ha='center', va='bottom', fontsize=9, color='red')
+    _draw_threshold(ax, x, z, zstar, two_tailed=two_tailed)
 
     ax.set_xlabel('Time Point', fontsize=12)
     
@@ -82,25 +110,7 @@ def plot_spm_result(spm_result, inference_result, ax=None, save_path=None, test_
         
     ax.grid(True, alpha=0.3)
 
-    if hasattr(inference_result, 'p') and inference_result.p is not None:
-        p_values = inference_result.p
-        if isinstance(p_values, (list, np.ndarray)):
-            if hasattr(inference_result, 'clusters') and inference_result.clusters is not None:
-                for i, (p, cluster) in enumerate(zip(p_values, inference_result.clusters)):
-                    p_str = "<0.001" if p < 0.001 else f"{p:.4f}"
-                    if hasattr(cluster, 'endpoints'):
-                        start, end = cluster.endpoints
-                        start_idx = int(start)
-                        end_idx = int(end)
-                        start_idx = max(0, min(start_idx, len(z) - 1))
-                        end_idx = max(0, min(end_idx, len(z) - 1))
-                        region_z = z[start_idx:end_idx+1]
-                        if len(region_z) > 0:
-                            max_idx = np.argmax(region_z)
-                            max_x = start_idx + max_idx
-                            max_z = region_z[max_idx]
-                            ax.text(max_x, max_z + 0.5, f'p = {p_str}',
-                                    ha='center', va='bottom', fontsize=9, color='black')
+    _annotate_p_values(ax, z, inference_result)
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -136,26 +146,19 @@ def export_figure(fig, filepath, format='png'):
     fig.savefig(filepath, dpi=300, bbox_inches='tight', format=format)
     return filepath
 
-def plot_posthoc_result(spm_result, inference_result, ax=None, save_path=None, title=None):
+def plot_posthoc_result(spm_result, inference_result, ax=None, save_path=None, title=None, z_full=None):
     setup_plot_style()
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6))
 
-    x = np.arange(len(spm_result.z))
-    z = spm_result.z
+    z = z_full if z_full is not None else np.asarray(spm_result.z)
+    x = np.arange(len(z))
     zstar = abs(inference_result.zstar)
 
     ax.plot(x, z, color=COLORS['primary'], linewidth=2)
 
-    ax.axhline(y=zstar, color='red', linestyle='--', linewidth=1.5)
-    ax.axhline(y=-zstar, color='red', linestyle='--', linewidth=1.5)
-    ax.fill_between(x, zstar, z, where=(z > zstar), color='red', alpha=0.3)
-    ax.fill_between(x, -zstar, z, where=(z < -zstar), color='red', alpha=0.3)
-    ax.text(x[-1] * 0.95, zstar + 0.3, f'+z* = {zstar:.4f}',
-            ha='center', va='bottom', fontsize=9, color='red')
-    ax.text(x[-1] * 0.95, -zstar - 0.3, f'-z* = {-zstar:.4f}',
-            ha='center', va='top', fontsize=9, color='red')
+    _draw_threshold(ax, x, z, zstar)
 
     ax.set_xlabel('Time Point', fontsize=12)
     ax.set_ylabel('SPM{z}', fontsize=12)
@@ -164,25 +167,7 @@ def plot_posthoc_result(spm_result, inference_result, ax=None, save_path=None, t
     if title:
         ax.set_title(title, fontsize=12)
 
-    if hasattr(inference_result, 'p') and inference_result.p is not None:
-        p_values = inference_result.p
-        if isinstance(p_values, (list, np.ndarray)):
-            if hasattr(inference_result, 'clusters') and inference_result.clusters is not None:
-                for i, (p, cluster) in enumerate(zip(p_values, inference_result.clusters)):
-                    p_str = "<0.001" if p < 0.001 else f"{p:.4f}"
-                    if hasattr(cluster, 'endpoints'):
-                        start, end = cluster.endpoints
-                        start_idx = int(start)
-                        end_idx = int(end)
-                        start_idx = max(0, min(start_idx, len(z) - 1))
-                        end_idx = max(0, min(end_idx, len(z) - 1))
-                        region_z = z[start_idx:end_idx+1]
-                        if len(region_z) > 0:
-                            max_idx = np.argmax(region_z)
-                            max_x = start_idx + max_idx
-                            max_z = region_z[max_idx]
-                            ax.text(max_x, max_z + 0.5, f'p = {p_str}',
-                                    ha='center', va='bottom', fontsize=9, color='black')
+    _annotate_p_values(ax, z, inference_result)
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')

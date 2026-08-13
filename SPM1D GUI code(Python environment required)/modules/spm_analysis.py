@@ -12,88 +12,77 @@ class SPMAnalyzer:
         self.posthoc_results = None
         
     def run_analysis(self):
-        if self.method == 'param':
-            return self._run_parametric()
-        else:
-            return self._run_nonparametric()
-    
-    def _run_parametric(self):
         try:
-            if self.test_type == 'ttest2':
-                if len(self.data) != 2:
-                    return None, "独立样本t检验需要两组数据"
-                group_names = list(self.data.keys())
+            stats = spm1d.stats if self.method == 'param' else spm1d.stats.nonparam
+            is_param = self.method == 'param'
+            group_names = list(self.data.keys())
+            n_groups = len(group_names)
+
+            if self.test_type in ('ttest2', 'ttest_paired'):
+                if n_groups != 2:
+                    return None, ("独立样本t检验需要两组数据" if self.test_type == 'ttest2'
+                                  else "配对样本t检验需要两组数据")
                 YA = self.data[group_names[0]]
                 YB = self.data[group_names[1]]
-                self.spm_result = spm1d.stats.ttest2(YA, YB, equal_var=False)
-                
-            elif self.test_type == 'ttest_paired':
-                if len(self.data) != 2:
-                    return None, "配对样本t检验需要两组数据"
-                group_names = list(self.data.keys())
-                YA = self.data[group_names[0]]
-                YB = self.data[group_names[1]]
-                self.spm_result = spm1d.stats.ttest_paired(YA, YB)
-                
+                if self.test_type == 'ttest2':
+                    param_kw = {'equal_var': False} if is_param else {}
+                    self.spm_result = stats.ttest2(YA, YB, **param_kw)
+                else:
+                    self.spm_result = stats.ttest_paired(YA, YB)
+
             elif self.test_type == 'ttest':
                 Y = self.kwargs.get('y_data')
                 mu = self.kwargs.get('mu_data', 0)
                 if Y is None:
                     return None, "单样本t检验需要提供y_data参数"
-                self.spm_result = spm1d.stats.ttest(Y, mu)
-                
-            elif self.test_type == 'anova1':
-                group_names = list(self.data.keys())
-                Y = np.vstack([self.data[g] for g in group_names])
-                A = np.concatenate([np.full(self.data[g].shape[0], i) 
-                                   for i, g in enumerate(group_names)])
-                self.spm_result = spm1d.stats.anova1(Y, A, equal_var=True)
-                
-            elif self.test_type == 'anova1rm':
-                group_names = list(self.data.keys())
-                Y = np.vstack([self.data[g] for g in group_names])
-                A = np.concatenate([np.full(self.data[g].shape[0], i) 
-                                   for i, g in enumerate(group_names)])
-                n_per_file = Y.shape[0] // len(group_names)
-                SUBJ = np.tile(np.arange(n_per_file), len(group_names))
-                self.spm_result = spm1d.stats.anova1rm(Y, A, SUBJ, equal_var=True)
-                
-            elif self.test_type == 'anova2':
-                A = self.kwargs.get('A', None)
-                B = self.kwargs.get('B', None)
-                if A is None or B is None:
-                    return None, "双因素ANOVA需要提供A和B分组信息"
-                group_name = list(self.data.keys())[0]
-                Y = self.kwargs.get('y_data', self.data[group_name])
-                self.spm_result = spm1d.stats.anova2(Y, A, B, equal_var=True)
-            
-            elif self.test_type == 'anova2rm':
-                A = self.kwargs.get('A', None)
-                B = self.kwargs.get('B', None)
-                SUBJ = self.kwargs.get('SUBJ', None)
-                if A is None or B is None or SUBJ is None:
-                    return None, "双因素重复测量ANOVA需要提供A、B和SUBJ参数"
-                Y = self.kwargs.get('y_data')
-                if Y is None:
-                    return None, "双因素重复测量ANOVA需要提供Y数据"
-                self.spm_result = spm1d.stats.anova2rm(Y, A, B, SUBJ, equal_var=True)
+                mu = np.asarray(mu, dtype=float).squeeze()
+                if mu.ndim >= 2:
+                    return None, "参照曲线(y0)应为1维向量或标量，请选择参照组的均值曲线"
+                self.spm_result = stats.ttest(Y, mu)
 
-            elif self.test_type == 'anova2onerm':
+            elif self.test_type in ('anova1', 'anova1rm'):
+                Y = np.vstack([self.data[g] for g in group_names])
+                A = np.concatenate([np.full(self.data[g].shape[0], i)
+                                   for i, g in enumerate(group_names)])
+                param_kw = {'equal_var': True} if is_param else {}
+                if self.test_type == 'anova1':
+                    self.spm_result = stats.anova1(Y, A, **param_kw)
+                else:
+                    n_per_file = Y.shape[0] // n_groups
+                    SUBJ = np.tile(np.arange(n_per_file), n_groups)
+                    self.spm_result = stats.anova1rm(Y, A, SUBJ, **param_kw)
+
+            elif self.test_type in ('anova2', 'anova2rm', 'anova2onerm'):
                 A = self.kwargs.get('A', None)
                 B = self.kwargs.get('B', None)
                 SUBJ = self.kwargs.get('SUBJ', None)
-                if A is None or B is None or SUBJ is None:
-                    return None, "双因素混合设计ANOVA需要提供A、B和SUBJ参数"
                 Y = self.kwargs.get('y_data')
-                if Y is None:
-                    return None, "双因素混合设计ANOVA需要提供Y数据"
-                self.spm_result = spm1d.stats.anova2onerm(Y, A, B, SUBJ, equal_var=True)
-                
+                param_kw = {'equal_var': True} if is_param else {}
+                if self.test_type == 'anova2':
+                    if A is None or B is None:
+                        return None, "双因素方差分析需要提供A和B分组信息"
+                    if Y is None:
+                        Y = self.data[group_names[0]]
+                    self.spm_result = stats.anova2(Y, A, B, **param_kw)
+                else:
+                    if A is None or B is None or SUBJ is None:
+                        return None, ("双因素重复测量方差分析需要提供A、B和SUBJ参数"
+                                      if self.test_type == 'anova2rm'
+                                      else "双因素混合设计方差分析需要提供A、B和SUBJ参数")
+                    if Y is None:
+                        return None, ("双因素重复测量方差分析需要提供Y数据"
+                                      if self.test_type == 'anova2rm'
+                                      else "双因素混合设计方差分析需要提供Y数据")
+                    if self.test_type == 'anova2rm':
+                        self.spm_result = stats.anova2rm(Y, A, B, SUBJ, **param_kw)
+                    else:
+                        self.spm_result = stats.anova2onerm(Y, A, B, SUBJ, **param_kw)
+
             elif self.test_type == 'regress':
                 x = self.kwargs.get('x_data', None)
+                Y = self.kwargs.get('y_data')
                 if x is None:
                     return None, "回归分析需要提供自变量x"
-                Y = self.kwargs.get('y_data')
                 if Y is None:
                     return None, "回归分析需要提供因变量Y"
                 try:
@@ -103,115 +92,17 @@ class SPMAnalyzer:
                         return None, "自变量x包含无效值(inf或nan)，请检查数据"
                     if np.any(np.isinf(Y)) or np.any(np.isnan(Y)):
                         return None, "因变量Y包含无效值(inf或nan)，请检查数据"
-                    self.spm_result = spm1d.stats.regress(Y, x)
-                except Exception as e:
-                    return None, f"回归分析失败: {str(e)}"
-                
-            else:
-                return None, f"不支持的分析类型: {self.test_type}"
-            
-            return self.spm_result, None
-            
-        except Exception as e:
-            return None, str(e)
-    
-    def _run_nonparametric(self):
-        try:
-            if self.test_type == 'ttest2':
-                if len(self.data) != 2:
-                    return None, "独立样本t检验需要两组数据"
-                group_names = list(self.data.keys())
-                YA = self.data[group_names[0]]
-                YB = self.data[group_names[1]]
-                self.spm_result = spm1d.stats.nonparam.ttest2(YA, YB)
-                
-            elif self.test_type == 'ttest_paired':
-                if len(self.data) != 2:
-                    return None, "配对样本t检验需要两组数据"
-                group_names = list(self.data.keys())
-                YA = self.data[group_names[0]]
-                YB = self.data[group_names[1]]
-                self.spm_result = spm1d.stats.nonparam.ttest_paired(YA, YB)
-                
-            elif self.test_type == 'ttest':
-                Y = self.kwargs.get('y_data')
-                mu = self.kwargs.get('mu_data', 0)
-                if Y is None:
-                    return None, "单样本t检验需要提供y_data参数"
-                self.spm_result = spm1d.stats.nonparam.ttest(Y, mu)
-                
-            elif self.test_type == 'anova1':
-                group_names = list(self.data.keys())
-                Y = np.vstack([self.data[g] for g in group_names])
-                A = np.concatenate([np.full(self.data[g].shape[0], i) 
-                                   for i, g in enumerate(group_names)])
-                self.spm_result = spm1d.stats.nonparam.anova1(Y, A)
-                
-            elif self.test_type == 'anova1rm':
-                group_names = list(self.data.keys())
-                Y = np.vstack([self.data[g] for g in group_names])
-                A = np.concatenate([np.full(self.data[g].shape[0], i) 
-                                   for i, g in enumerate(group_names)])
-                n_per_file = Y.shape[0] // len(group_names)
-                SUBJ = np.tile(np.arange(n_per_file), len(group_names))
-                self.spm_result = spm1d.stats.nonparam.anova1rm(Y, A, SUBJ)
-                
-            elif self.test_type == 'anova2':
-                A = self.kwargs.get('A', None)
-                B = self.kwargs.get('B', None)
-                if A is None or B is None:
-                    return None, "双因素ANOVA需要提供A和B分组信息"
-                group_name = list(self.data.keys())[0]
-                Y = self.kwargs.get('y_data', self.data[group_name])
-                self.spm_result = spm1d.stats.nonparam.anova2(Y, A, B)
-            
-            elif self.test_type == 'anova2rm':
-                A = self.kwargs.get('A', None)
-                B = self.kwargs.get('B', None)
-                SUBJ = self.kwargs.get('SUBJ', None)
-                if A is None or B is None or SUBJ is None:
-                    return None, "双因素重复测量ANOVA需要提供A、B和SUBJ参数"
-                Y = self.kwargs.get('y_data')
-                if Y is None:
-                    return None, "双因素重复测量ANOVA需要提供Y数据"
-                self.spm_result = spm1d.stats.nonparam.anova2rm(Y, A, B, SUBJ)
-
-            elif self.test_type == 'anova2onerm':
-                A = self.kwargs.get('A', None)
-                B = self.kwargs.get('B', None)
-                SUBJ = self.kwargs.get('SUBJ', None)
-                if A is None or B is None or SUBJ is None:
-                    return None, "双因素混合设计ANOVA需要提供A、B和SUBJ参数"
-                Y = self.kwargs.get('y_data')
-                if Y is None:
-                    return None, "双因素混合设计ANOVA需要提供Y数据"
-                self.spm_result = spm1d.stats.nonparam.anova2onerm(Y, A, B, SUBJ)
-                
-            elif self.test_type == 'regress':
-                x = self.kwargs.get('x_data', None)
-                if x is None:
-                    return None, "回归分析需要提供自变量x"
-                Y = self.kwargs.get('y_data')
-                if Y is None:
-                    return None, "回归分析需要提供因变量Y"
-                try:
-                    x = np.asarray(x, dtype=float)
-                    Y = np.asarray(Y, dtype=float)
-                    if np.any(np.isinf(x)) or np.any(np.isnan(x)):
-                        return None, "自变量x包含无效值(inf或nan)，请检查数据"
-                    if np.any(np.isinf(Y)) or np.any(np.isnan(Y)):
-                        return None, "因变量Y包含无效值(inf或nan)，请检查数据"
-                    if Y.shape[0] > 150:
+                    if not is_param and Y.shape[0] > 150:
                         return None, f"非参数回归不支持样本数超过150的数据\n当前样本数: {Y.shape[0]}\n请使用参数检验代替"
-                    self.spm_result = spm1d.stats.nonparam.regress(Y, x)
+                    self.spm_result = stats.regress(Y, x)
                 except Exception as e:
                     return None, f"回归分析失败: {str(e)}"
-                
+
             else:
                 return None, f"不支持的分析类型: {self.test_type}"
-            
+
             return self.spm_result, None
-            
+
         except Exception as e:
             return None, str(e)
     
@@ -315,9 +206,9 @@ class SPMAnalyzer:
         return summary
 
     def run_posthoc(self, alpha=0.05):
-        """ANOVA事后检验：组间两两比较，使用Bonferroni校正"""
+        """方差分析事后检验：组间两两比较，使用Bonferroni校正"""
         if self.test_type not in ['anova1', 'anova1rm']:
-            return None, "事后检验仅适用于单因素ANOVA"
+            return None, "事后检验仅适用于单因素方差分析"
 
         group_names = list(self.data.keys())
         n_groups = len(group_names)
@@ -339,7 +230,11 @@ class SPMAnalyzer:
                 Ya = self.data[group_names[i]].copy()
                 Yb = self.data[group_names[j]].copy()
 
-                Ya, Yb = self._remove_zero_variance_columns_pair(Ya, Yb)
+                Q_orig = Ya.shape[1]
+                deleted_cols = self._get_deleted_cols(Ya, Yb)
+                if len(deleted_cols) > 0:
+                    Ya = np.delete(Ya, deleted_cols, axis=1)
+                    Yb = np.delete(Yb, deleted_cols, axis=1)
 
                 if self.method == 'param':
                     if self.test_type == 'anova1rm':
@@ -367,24 +262,41 @@ class SPMAnalyzer:
                 except Exception as e:
                     ttest_inference = None
 
+                z_full = None
+                if len(deleted_cols) > 0:
+                    z_full = self._get_full_z(ttest_result.z, deleted_cols, Q_orig)
+                    if ttest_inference is not None and hasattr(ttest_inference, 'clusters') and ttest_inference.clusters is not None:
+                        for cluster in ttest_inference.clusters:
+                            if hasattr(cluster, 'endpoints') and cluster.endpoints is not None:
+                                start, end = cluster.endpoints
+                                s, e = int(round(start)), int(round(end))
+                                adj_start = s + int(np.sum(deleted_cols <= s))
+                                adj_end = e + int(np.sum(deleted_cols <= e))
+                                cluster.endpoints = (float(adj_start), float(adj_end))
+
                 self.posthoc_results[pair_name] = {
                     'spm_result': ttest_result,
                     'inference_result': ttest_inference,
                     'alpha_corrected': alpha_corrected,
-                    'n_comparisons': n_comparisons
+                    'n_comparisons': n_comparisons,
+                    'z_full': z_full,
+                    'deleted_cols': deleted_cols.tolist() if len(deleted_cols) > 0 else []
                 }
 
         return self.posthoc_results, None
 
-    def _remove_zero_variance_columns_pair(self, Ya, Yb):
-        """删除两组比较中方差为0的列"""
+    def _get_deleted_cols(self, Ya, Yb):
         zero_cols_a = np.where(np.var(Ya, axis=0) == 0)[0]
         zero_cols_b = np.where(np.var(Yb, axis=0) == 0)[0]
-        zero_cols = np.union1d(zero_cols_a, zero_cols_b)
-        if len(zero_cols) > 0:
-            Ya = np.delete(Ya, zero_cols, axis=1)
-            Yb = np.delete(Yb, zero_cols, axis=1)
-        return Ya, Yb
+        return np.union1d(zero_cols_a, zero_cols_b)
+
+    def _get_full_z(self, z_reduced, deleted_cols, Q_orig):
+        if deleted_cols is None or len(deleted_cols) == 0:
+            return np.asarray(z_reduced)
+        z_full = np.full(Q_orig, np.nan)
+        remaining = np.setdiff1d(np.arange(Q_orig), deleted_cols)
+        z_full[remaining] = z_reduced
+        return z_full
 
     def get_posthoc_summary(self):
         """获取事后检验汇总"""

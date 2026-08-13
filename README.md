@@ -1,10 +1,10 @@
-# SPM1D Analyzer v2.82
+# SPM1D Analyzer v2.83
 
 An application for One-Dimensional Statistical Parametric Mapping (SPM1D) analysis. For the statistical analysis of continuous curve data. No programming skills required! Supports both Chinese and English!
 
 ## Features
 
-- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups. Custom data selection is newly added in Version 2.82.
+- 📁 **Data Import**: Supports CSV/XLSX formats with automatic folder structure recognition for indicators and groups. Detects uneven data and recommends interpolation
 - 📊 **Data Preprocessing (Optional)**: Data interpolation and denoising
 - 📈 **Normality Test**: Implements D'Agostino-Pearson K² test from spm1d
 - 🔬 **Multiple Analyses**: Supports t-tests (one-sample, paired, independent), ANOVA (one-way, one-way repeated measures, two-way, two-way repeated measures, two-way mixed design), and simple regression
@@ -17,7 +17,7 @@ An application for One-Dimensional Statistical Parametric Mapping (SPM1D) analys
 
 ### Option 1: Run Standalone (No Python required)
 
-- **Windows**: Download `SPM1D Analyzer v2.82.exe`, Double-click to run
+- **Windows**: Download `SPM1D分析软件.exe`, Double-click to run
 
 ### Option 2: Run from Source (Lightweight)
 
@@ -29,7 +29,7 @@ git clone https://github.com/shanshanfagu/SPM1D-Analysis-Wrapper-Program
 pip install -r requirements.txt
 
 # Run the program
-SPM1D Analyzer v2.82.py
+python "SPM1D Analyzer v2.83.py"
 ```
 
 ## Workflow
@@ -68,7 +68,7 @@ Supports Excel (.xlsx) and CSV formats:
 | Two-way ANOVA | Two-factor independent groups analysis |
 | Two-way Repeated Measures ANOVA | Two-factor analysis with same subjects across all conditions |
 | Two-way Mixed Design ANOVA | One between-subjects factor and one within-subjects factor |
-| Simple Regression | Single variable trend analysis |
+| Simple Regression | Single variable trend analysis (non-parametric regression limited to ≤150 samples; use parametric method beyond that) |
 
 ### Data Export
 
@@ -119,5 +119,3 @@ GPL-3.0 License
 
 - [spm1d Project](https://github.com/0todd0000/spm1d)
 - [spm1d Documentation](http://spm1d.org)
-
-
